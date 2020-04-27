@@ -26,8 +26,8 @@ namespace az_membermanagement_af01.Functions
         }
 
         [FunctionName(nameof(RetrieveBorrowStatus))]
-        [return: EventGrid(TopicEndpointUri ="" , 
-            TopicKeySetting = "")]
+        [return: EventGrid(TopicEndpointUri = "topicEndpointUri", 
+            TopicKeySetting = "topicKey")]
         public async Task<EventGridEvent> Run(
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
             ILogger logger)
@@ -51,6 +51,7 @@ namespace az_membermanagement_af01.Functions
                         Data = reservationEvent.BookReservation,
                         EventType = "Accepted",
                         Subject = "BookReservation",
+                        DataVersion = "1.0"
 
                     };
                 }
@@ -61,6 +62,7 @@ namespace az_membermanagement_af01.Functions
                         Data = reservationEvent.BookReservation,
                         EventType = "Rejected",
                         Subject = "BookReservation",
+                        DataVersion = "1.0"
 
                     };
                 }
