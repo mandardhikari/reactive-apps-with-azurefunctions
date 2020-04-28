@@ -8,6 +8,7 @@ namespace az_notification_af01.Models
     {
         Requested,
         Accepted,
-        Rejected
+        Rejected,
+        Created
     }
 }

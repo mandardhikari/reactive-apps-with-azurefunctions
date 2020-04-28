@@ -27,7 +27,7 @@ namespace az_notification_af01.Functions
         [FunctionName(nameof(NotifyMember))]
         public async Task Run(
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
-            [SendGrid(ApiKey = "AzureWebJobsSendGridApiKey") ]  IAsyncCollector<SendGridMessage> asyncCollector,
+            [SendGrid(ApiKey = "AzureWebJobsSendGridApiKey")]  IAsyncCollector<SendGridMessage> asyncCollector,
             ILogger logger)
         {
             //Create a reservation request
@@ -43,23 +43,40 @@ namespace az_notification_af01.Functions
                       nameof(NotifyMember),
                       reservationEvent.EventType.ToString(),
                       Logging.Status.Started.ToString(),
-                      "Notifying Member of successful book reservation."
+                      "Notifying Member about status of book reservation."
                       );
 
 
 
                 var member = await _sqlHelper.RetrieveMember(reservationEvent);
 
-                string emailBody = string.Format(MailTemplate.Body, member.Name, "1",
-                    reservationEvent.BookReservation.Name,
-                    reservationEvent.BookReservation.Author,
-                    reservationEvent.BookReservation.ISBN,
-                    reservationEvent.BookReservation.CorrelationID);
-
                 var emailMessage = new SendGridMessage();
                 emailMessage.AddTo(member.Email);
                 emailMessage.SetFrom(MailTemplate.From);
                 emailMessage.SetSubject(MailTemplate.Subject);
+                string emailBody = string.Empty;
+
+                switch (reservationEvent.EventType)
+                {
+                    case ReservationStatus.Created:
+                        emailBody = string.Format(MailTemplate.AcceptedBody, member.Name, "1",
+                        reservationEvent.BookReservation.Name,
+                        reservationEvent.BookReservation.Author,
+                        reservationEvent.BookReservation.ISBN,
+                        reservationEvent.BookReservation.CorrelationID);
+                        break;
+                    case ReservationStatus.Rejected:
+                        emailBody = string.Format(MailTemplate.RejectedBody, member.Name, "1",
+                        reservationEvent.BookReservation.Name,
+                        reservationEvent.BookReservation.Author,
+                        reservationEvent.BookReservation.ISBN
+                        );
+                        break;
+                }
+
+
+
+
                 emailMessage.AddContent("text/html", emailBody);
 
                 await asyncCollector.AddAsync(emailMessage);
@@ -80,7 +97,7 @@ namespace az_notification_af01.Functions
                       Logging.GenericExceptionLoggingTemplate,
                       nameof(NotifyMember),
                       Logging.Status.Failed.ToString(),
-                      string.Format("Failed while notifying Member of successful book reservation. Exception {0}", ex.Message)
+                      string.Format("Failed while notifying Member of state of book reservation. Exception {0}", ex.Message)
                       );
                 //Output Exception Event
             }
