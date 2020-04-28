@@ -9,6 +9,7 @@ namespace az_membermanagement_af01.Models
         Requested,
         Accepted,
         Exceptioned,
-        Rejected
+        Rejected,
+        Created
     }
 }

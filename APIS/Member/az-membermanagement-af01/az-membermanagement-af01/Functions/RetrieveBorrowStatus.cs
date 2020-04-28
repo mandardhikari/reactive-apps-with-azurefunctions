@@ -11,6 +11,7 @@ using az_membermanagement_af01.Interfaces;
 using az_membermanagement_af01.Models;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
+using az_membermanagement_af01.Constants;
 
 namespace az_membermanagement_af01.Functions
 {
@@ -38,11 +39,27 @@ namespace az_membermanagement_af01.Functions
             try
             {
                 // Read the body 
-               
 
-                
-                
+                logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.RetrieveBorrowStatus)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(RetrieveBorrowStatus),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Started.ToString(),
+                      "Retrieveing borrow status of member."
+                      );
+
+
                 var status = await _sqlHelper.RetrieveBorrowStatus(reservationEvent).ConfigureAwait(false);
+
+                logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.RetrieveBorrowStatus)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(RetrieveBorrowStatus),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Succeeded.ToString(),
+                      "Retrieved borrow status of member. Generating Event"
+                      );
 
                 if (status)
                 {
@@ -50,7 +67,7 @@ namespace az_membermanagement_af01.Functions
                     {
                         Id = reservationEvent.ID,
                         Data = reservationEvent.BookReservation,
-                        EventType = "Accepted",
+                        EventType = ReservationStatus.Accepted.ToString(),
                         Subject = "BookReservation",
                         DataVersion = "1.0"
 
@@ -61,7 +78,7 @@ namespace az_membermanagement_af01.Functions
                     {
                         Id = reservationEvent.ID,
                         Data = reservationEvent.BookReservation,
-                        EventType = "Rejected",
+                        EventType = ReservationStatus.Rejected.ToString(),
                         Subject = "BookReservation",
                         DataVersion = "1.0"
 
@@ -71,11 +88,20 @@ namespace az_membermanagement_af01.Functions
             }
             catch (Exception ex)
             {
+                logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.RetrieveBorrowStatus)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(RetrieveBorrowStatus),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Failed.ToString(),
+                      string.Format("Error retrieveing borrow status of member. Exception {0}", ex.Message)
+                      ) ;
+
                 return new EventGridEvent()
                 {
                     Id = reservationEvent.ID,
                     Data = reservationEvent.BookReservation,
-                    EventType = "Exceptioned",
+                    EventType = ReservationStatus.Exceptioned.ToString(),
                     Subject = "BookReservation",
                     DataVersion = "1.0"
 

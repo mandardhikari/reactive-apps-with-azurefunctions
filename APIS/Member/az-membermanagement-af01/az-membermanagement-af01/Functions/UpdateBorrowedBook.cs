@@ -11,6 +11,7 @@ using az_membermanagement_af01.Interfaces;
 using az_membermanagement_af01.Models;
 using Microsoft.Azure.EventGrid.Models;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
+using az_membermanagement_af01.Constants;
 
 namespace az_membermanagement_af01.Functions
 {
@@ -31,30 +32,96 @@ namespace az_membermanagement_af01.Functions
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
             ILogger logger)
         {
+            // Read the body 
+            string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
+            EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
+
             //Create a reservation request
             try
             {
-                // Read the body 
-                string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
-                EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
+                
+
+                logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.UpdateBorrowedBook)),
+                     Logging.LoggingTemplate,
+                     reservationEvent.BookReservation.CorrelationID,
+                     nameof(UpdateBorrowedBook),
+                     reservationEvent.EventType.ToString(),
+                     Logging.Status.Started.ToString(),
+                     "Updating borrowed book by the member."
+                     );
+
 
                 var retVal = await _sqlHelper.UpdateBorrowedBook(reservationEvent).ConfigureAwait(false);
 
-                return new EventGridEvent()
-                {
-                    Id = reservationEvent.ID,
-                    Data = reservationEvent.BookReservation,
-                    EventType = "Created",
-                    Subject = "BookReservation",
-                    DataVersion = "1.0"
+              
 
-                };
+                if (retVal == 1)
+                {
+                    logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.UpdateBorrowedBook)),
+                  Logging.LoggingTemplate,
+                  reservationEvent.BookReservation.CorrelationID,
+                  nameof(UpdateBorrowedBook),
+                  reservationEvent.EventType.ToString(),
+                  Logging.Status.Succeeded.ToString(),
+                  "Updated borrowed book by the member."
+                  );
+                    return new EventGridEvent()
+                    {
+                        Id = reservationEvent.ID,
+                        Data = reservationEvent.BookReservation,
+                        EventType = ReservationStatus.Created.ToString(),
+                        Subject = "BookReservation",
+                        DataVersion = "1.0"
+
+                    };
+
+                }
+                else
+                {
+                    logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.UpdateBorrowedBook)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(UpdateBorrowedBook),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Failed.ToString(),
+                      string.Format("Failed to update borrowed book by the member.")
+                      );
+
+                    return new EventGridEvent()
+                    {
+                        Id = reservationEvent.ID,
+                        Data = reservationEvent.BookReservation,
+                        EventType = ReservationStatus.Exceptioned.ToString(),
+                        Subject = "BookReservation",
+                        DataVersion = "1.0"
+
+                    };
+                }
+
+                
 
             }
             catch (Exception ex)
             {
+                logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.UpdateBorrowedBook)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(UpdateBorrowedBook),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Failed.ToString(),
+                      string.Format("Failed to update borrowed book by the member. Error {0}", ex.Message)
+                      );
+
                 //Output Exception Event
-                return null;
+                return new EventGridEvent()
+                {
+                    Id = reservationEvent.ID,
+                    Data = reservationEvent.BookReservation,
+                    EventType = ReservationStatus.Exceptioned.ToString(),
+                    Subject = "BookReservation",
+                    DataVersion = "1.0"
+
+                };
             }
 
         }
