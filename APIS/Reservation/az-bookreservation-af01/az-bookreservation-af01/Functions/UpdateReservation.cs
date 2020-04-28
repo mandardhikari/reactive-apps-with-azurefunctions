@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using az_bookreservation_af01.Interfaces;
 using az_bookreservation_af01.Models;
+using az_bookreservation_af01.Constants;
 
 namespace az_bookreservation_af01.Functions
 {
@@ -27,19 +28,65 @@ namespace az_bookreservation_af01.Functions
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
             ILogger logger)
         {
-            //Create a reservation request
             try
             {
-                // Read the body 
                 string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
                 EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
 
-                await _sqlHelper.UpdateReservation(reservationEvent).ConfigureAwait(false);
+                //Create a reservation request
+                try
+                {
 
+                    // Read the body 
+
+
+
+                    //Log Start
+                    logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.UpdateReservation)),
+                        Logging.LoggingTemplate,
+                        reservationEvent.BookReservation.CorrelationID,
+                        nameof(UpdateReservation),
+                        reservationEvent.EventType.ToString(),
+                        Logging.Status.Started.ToString(),
+                        "Updating auditing entry."
+                        );
+
+                    await _sqlHelper.UpdateReservation(reservationEvent).ConfigureAwait(false);
+
+                    logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.UpdateReservation)),
+                        Logging.LoggingTemplate,
+                        reservationEvent.BookReservation.CorrelationID,
+                        nameof(UpdateReservation),
+                        reservationEvent.EventType.ToString(),
+                        Logging.Status.Succeeded.ToString(),
+                        "Completed updating auditing entry."
+
+                        );
+
+
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.UpdateReservation)),
+                        Logging.LoggingTemplate,
+                        reservationEvent.BookReservation.CorrelationID,
+                        nameof(UpdateReservation),
+                        reservationEvent.EventType.ToString(),
+                        Logging.Status.Failed.ToString(),
+                        string.Format("Failed while updating auditing entry. Exception {0}", ex.Message)
+                        ) ;
+                }
             }
+            //Catch Parsing Exception
             catch (Exception ex)
             {
-                //Output Exception Event
+
+                logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.UpdateReservation)),
+                        Logging.GenericExceptionLoggingTemplate,
+                        nameof(UpdateReservation),
+                        Logging.Status.Failed.ToString(),
+                        string.Format("Failed while parsing incoming event. Exception {0}", ex.Message)
+                        );
             }
 
         }

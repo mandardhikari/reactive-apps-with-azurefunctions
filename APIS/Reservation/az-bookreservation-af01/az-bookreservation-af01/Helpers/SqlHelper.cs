@@ -41,7 +41,7 @@ namespace az_bookreservation_af01.Helpers
                     command.Parameters.AddWithValue("@ISBN", reservationEvent.BookReservation.ISBN);
                     command.Parameters["@ISBN"].Direction = System.Data.ParameterDirection.Input;
 
-                    command.Parameters.AddWithValue("@Status", reservationEvent.EventType);
+                    command.Parameters.AddWithValue("@Status", reservationEvent.EventType.ToString());
                     command.Parameters["@Status"].Direction = System.Data.ParameterDirection.Input;
 
                     await connection.OpenAsync().ConfigureAwait(false);
@@ -61,14 +61,14 @@ namespace az_bookreservation_af01.Helpers
         {
             using (var connection = new SqlConnection(_connectionString))
             {
-                using (var command = new SqlCommand("Reservation.uspCreateReservation", connection))
+                using (var command = new SqlCommand("Reservation.uspUpdateReservation", connection))
                 {
                     command.CommandType = System.Data.CommandType.StoredProcedure;
 
                     command.Parameters.AddWithValue("@CorrelationID", reservationEvent.BookReservation.CorrelationID);
                     command.Parameters["@CorrelationID"].Direction = System.Data.ParameterDirection.Input;
 
-                    command.Parameters.AddWithValue(@"Status", reservationEvent.EventType);
+                    command.Parameters.AddWithValue("@Status", reservationEvent.EventType.ToString());
                     command.Parameters["@Status"].Direction = System.Data.ParameterDirection.Input;
 
                     await connection.OpenAsync();
