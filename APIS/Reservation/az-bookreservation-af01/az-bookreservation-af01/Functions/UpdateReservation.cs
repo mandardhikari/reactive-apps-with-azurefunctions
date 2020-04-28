@@ -33,13 +33,9 @@ namespace az_bookreservation_af01.Functions
                 string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
                 EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
 
-                //Create a reservation request
+                
                 try
                 {
-
-                    // Read the body 
-
-
 
                     //Log Start
                     logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.UpdateReservation)),
