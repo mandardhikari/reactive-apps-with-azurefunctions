@@ -40,14 +40,16 @@ namespace az_bookmanagement_af01.Helpers
 
                     switch (reservationEvent.EventType)
                     {
-                        case "Requested":
+                        case ReservationStatus.Requested:
                             command.Parameters["@Lock"].Value = 1;
                             break;
-                        case "Rejected":
+
+                        case ReservationStatus.Rejected:
+                        case ReservationStatus.Exceptioned:
                             command.Parameters["@Lock"].Value = 0;
                             break;
 
-                        case "Accepted":
+                        case ReservationStatus.Accepted:
                             command.Parameters["@Lock"].Value = 2;
                             break;
                     }   

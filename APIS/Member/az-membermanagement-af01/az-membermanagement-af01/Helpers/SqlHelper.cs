@@ -38,13 +38,25 @@ namespace az_membermanagement_af01.Helpers
                     command.Parameters.AddWithValue("@MemberID", reservationEvent.BookReservation.MemberID);
                     command.Parameters["@MemberID"].Direction = System.Data.ParameterDirection.Input;
 
-                    command.Parameters.AddWithValue("@ISBN", reservationEvent.BookReservation.ISBN);
+                    command.Parameters.Add("@ISBN", System.Data.SqlDbType.NVarChar, 20).Direction =
+                        System.Data.ParameterDirection.Input;
 
-                    command.Parameters["@ISBN"].Direction = System.Data.ParameterDirection.Input;
+                    command.Parameters.Add("@CanBorrow", System.Data.SqlDbType.Bit).Direction =
+                        System.Data.ParameterDirection.Input;
 
-                    command.Parameters.Add("@CanBorrow", System.Data.SqlDbType.Bit).Value = false;
-                    command.Parameters["@CanBorrow"].Direction = System.Data.ParameterDirection.Input;
+                    switch(reservationEvent.EventType)
+                    {
+                        case ReservationStatus.Accepted:
+                            command.Parameters["@ISBN"].Value = reservationEvent.BookReservation.ISBN;
+                            command.Parameters["@CanBorrow"].Value = false;
+                            break;
 
+                        case ReservationStatus.Exceptioned:
+                            command.Parameters["@ISBN"].Value = DBNull.Value;
+                            command.Parameters["@CanBorrow"].Value = true;
+                            break;
+
+                    }
                     await connection.OpenAsync().ConfigureAwait(false);
 
                     numberofRowsUpdated = await command.ExecuteNonQueryAsync().ConfigureAwait(false);

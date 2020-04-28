@@ -32,12 +32,13 @@ namespace az_membermanagement_af01.Functions
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
             ILogger logger)
         {
+            string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
+            EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
             //Create a reservation request
             try
             {
                 // Read the body 
-                string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
-                EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
+               
 
                 
                 
@@ -70,8 +71,15 @@ namespace az_membermanagement_af01.Functions
             }
             catch (Exception ex)
             {
-                return null;
-                //Output Exception Event
+                return new EventGridEvent()
+                {
+                    Id = reservationEvent.ID,
+                    Data = reservationEvent.BookReservation,
+                    EventType = "Exceptioned",
+                    Subject = "BookReservation",
+                    DataVersion = "1.0"
+
+                };
             }
 
         }

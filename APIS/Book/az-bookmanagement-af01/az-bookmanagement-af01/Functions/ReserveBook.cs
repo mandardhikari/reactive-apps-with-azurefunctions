@@ -12,17 +12,17 @@ using az_bookmanagement_af01.Models;
 
 namespace az_bookreservation_af01.Functions
 {
-    public class LockBook
+    public class ReserveBook
     {
         private readonly ISqlHelper _sqlHelper;
 
-        public LockBook(ISqlHelper sqlHelper)
+        public ReserveBook(ISqlHelper sqlHelper)
         {
             _sqlHelper = sqlHelper ?? throw new ArgumentNullException(nameof(sqlHelper));
 
         }
 
-        [FunctionName(nameof(LockBook))]
+        [FunctionName(nameof(ReserveBook))]
         public async Task Run(
             [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
             ILogger logger)

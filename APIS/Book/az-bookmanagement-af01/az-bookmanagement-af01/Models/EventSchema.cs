@@ -14,7 +14,7 @@ namespace az_bookmanagement_af01.Models
         public DateTime EventTime { get; set; }
 
         [JsonProperty(PropertyName = "eventType")]
-        public string EventType { get; set; }
+        public ReservationStatus EventType { get; set; }
 
         [JsonProperty(PropertyName = "subject")]
         public string Subject { get; set; }

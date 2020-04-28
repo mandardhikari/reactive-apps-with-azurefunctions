@@ -8,6 +8,7 @@ namespace az_bookmanagement_af01.Models
     {
         Requested,
         Accepted,
+        Exceptioned,
         Rejected
     }
 }
