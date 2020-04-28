@@ -1,0 +1,12 @@
+traces 
+| sort by timestamp desc
+| where customDimensions.EventId >= 100
+| where customDimensions.prop__CorrelationID == "25904b9a-c0b1-42ed-ab8f-ce86a76f9ecf" 
+| order by toint(customDimensions.prop_EventId) asc
+| project  Level = customDimensions.LogLevel 
+           , EventId = customDimensions.EventId
+           , EventDescription = customDimensions.prop__EventType
+           , Function = customDimensions.prop__Function
+           , CorrelationID = customDimensions.prop__CorrelationID
+           , Status = customDimensions.prop__Status
+           , LogMessage = customDimensions.prop__LogMessage
