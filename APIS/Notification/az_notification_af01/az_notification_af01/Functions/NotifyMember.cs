@@ -37,6 +37,17 @@ namespace az_notification_af01.Functions
                 string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
                 EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
 
+                logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.NotifyMember)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(NotifyMember),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Started.ToString(),
+                      "Notifying Member of successful book reservation."
+                      );
+
+
+
                 var member = await _sqlHelper.RetrieveMember(reservationEvent);
 
                 string emailBody = string.Format(MailTemplate.Body, member.Name, "1",
@@ -52,12 +63,25 @@ namespace az_notification_af01.Functions
                 emailMessage.AddContent("text/html", emailBody);
 
                 await asyncCollector.AddAsync(emailMessage);
-                
 
+                logger.LogInformation(new EventId(Convert.ToInt32(Logging.EventId.NotifyMember)),
+                      Logging.LoggingTemplate,
+                      reservationEvent.BookReservation.CorrelationID,
+                      nameof(NotifyMember),
+                      reservationEvent.EventType.ToString(),
+                      Logging.Status.Succeeded.ToString(),
+                      "Handing over notification to Send Grid server."
+                      );
 
             }
             catch (Exception ex)
             {
+                logger.LogError(new EventId(Convert.ToInt32(Logging.EventId.NotifyMember)),
+                      Logging.GenericExceptionLoggingTemplate,
+                      nameof(NotifyMember),
+                      Logging.Status.Failed.ToString(),
+                      string.Format("Failed while notifying Member of successful book reservation. Exception {0}", ex.Message)
+                      );
                 //Output Exception Event
             }
 
