@@ -9,6 +9,7 @@ namespace az_bookreservation_af01.Models
         Requested,
         Accepted,
         Exceptioned,
-        Rejected
+        Rejected,
+        Created
     }
 }

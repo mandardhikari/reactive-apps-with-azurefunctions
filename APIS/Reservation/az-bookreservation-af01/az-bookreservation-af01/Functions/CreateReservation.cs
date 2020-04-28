@@ -10,6 +10,9 @@ using Newtonsoft.Json;
 using az_bookreservation_af01.Interfaces;
 using az_bookreservation_af01.Models;
 using az_bookreservation_af01.Constants;
+using Microsoft.Azure.WebJobs.Extensions.EventGrid;
+using Microsoft.Azure.EventGrid.Models;
+using Newtonsoft.Json.Linq;
 
 namespace az_bookreservation_af01.Functions
 {
@@ -26,14 +29,23 @@ namespace az_bookreservation_af01.Functions
 
         [FunctionName(nameof(CreateReservation))]
         public async Task Run(
-            [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
+            [EventGridTrigger()] EventGridEvent eventGridEvent,
             ILogger logger)
         {
             try
             {
-                // Read the body 
-                string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
-                EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
+
+                EventSchema reservationEvent = new EventSchema()
+                {
+                    ID = eventGridEvent.Id,
+                    BookReservation = ((JObject)eventGridEvent.Data).ToObject<BookReservation>(),
+                    EventTime = eventGridEvent.EventTime,
+                    EventType = (ReservationStatus)Enum.Parse(typeof(ReservationStatus), eventGridEvent.EventType),
+                    Subject = eventGridEvent.Subject
+
+                };
+                
+                
 
                 try
                 {

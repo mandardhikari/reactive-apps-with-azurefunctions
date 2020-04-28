@@ -12,6 +12,7 @@ using az_membermanagement_af01.Models;
 using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Microsoft.Azure.EventGrid.Models;
 using az_membermanagement_af01.Constants;
+using Newtonsoft.Json.Linq;
 
 namespace az_membermanagement_af01.Functions
 {
@@ -30,11 +31,18 @@ namespace az_membermanagement_af01.Functions
         [return: EventGrid(TopicEndpointUri = "topicEndpointUri", 
             TopicKeySetting = "topicKey")]
         public async Task<EventGridEvent> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "Post")] HttpRequest httpRequest,
+            [EventGridTrigger()] EventGridEvent eventGridEvent,
             ILogger logger)
         {
-            string requestBody = await new StreamReader(httpRequest.Body).ReadToEndAsync();
-            EventSchema reservationEvent = JsonConvert.DeserializeObject<EventSchema>(requestBody);
+            EventSchema reservationEvent = new EventSchema()
+            {
+                ID = eventGridEvent.Id,
+                BookReservation = ((JObject)eventGridEvent.Data).ToObject<BookReservation>(),
+                EventTime = eventGridEvent.EventTime,
+                EventType = (ReservationStatus)Enum.Parse(typeof(ReservationStatus), eventGridEvent.EventType),
+                Subject = eventGridEvent.Subject
+
+            };
             //Create a reservation request
             try
             {
